@@ -1,54 +1,86 @@
 use ggez::event;
 use ggez::graphics;
-use ggez::nalgebra;
+use ggez::nalgebra::{Point2, Vector2};
 use ggez::{Context, GameResult};
 
+struct BallState {
+    pos: Point2<f32>,
+    vel: Vector2<f32>,
+}
+
+struct PaddleState {
+    pos: Point2<f32>,
+}
+
 struct MainState {
-    pos_x: f32,
-    pos_y: f32,
-    vel_x: f32,
-    vel_y: f32,
+    ball: BallState,
+    paddles: [PaddleState; 2],
 }
 
 impl MainState {
     fn new() -> GameResult<MainState> {
-        Ok(MainState{ pos_x: 0.0, pos_y: 0.0, vel_x: 4.0, vel_y: 4.0})
+        let ball = BallState {
+            pos: Point2::new(0.0, 300.0),
+            vel: Vector2::new(4.0, 0.0),
+        };
+        let left_paddle = PaddleState {
+            pos: Point2::new(10.0, 300.0),
+        };
+        let right_paddle = PaddleState {
+            pos: Point2::new(790.0, 300.0),
+        };
+        let main_state = MainState {
+            ball,
+            paddles: [left_paddle, right_paddle],
+        };
+        Ok(main_state)
     }
 }
 
 impl event::EventHandler for MainState {
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
-        self.pos_x = self.pos_x + self.vel_x;
-        self.vel_x = if self.pos_x > 800.0 && self.vel_x > 0.0 
+        if self.ball.vel.x > 0.0 {
+            if (self.ball.pos.x - self.paddles[1].pos.x).abs() < 5.0
+                && (self.ball.pos.y - self.paddles[1].pos.y).abs() < 50.0
+            {
+                self.ball.vel.x *= -1.0;
+            }
+        } else if (self.ball.pos.x - self.paddles[0].pos.x).abs() < 5.0
+            && (self.ball.pos.y - self.paddles[0].pos.y).abs() < 50.0
         {
-            -4.0
-        } else if self.pos_x < 0.0 && self.vel_x < 0.0 
+            self.ball.vel.x *= -1.0;
+        }
+
+        if self.ball.pos.y < 0.0 && self.ball.vel.y < 0.0
+            || self.ball.pos.y > 600.0 && self.ball.vel.y > 0.0
         {
-            4.0
-        } else
-        {
-            self.vel_x
-        };
-        self.pos_y = self.pos_y + self.vel_y;
-        self.vel_y = if self.pos_y > 600.0 && self.vel_y > 0.0 
-        {
-            -4.0
-        } else if self.pos_y < 0.0 && self.vel_y < 0.0 
-        {
-            4.0
-        } else
-        {
-            self.vel_y
-        };
+            self.ball.vel.y *= -1.0;
+        }
+        self.ball.pos += self.ball.vel;
         Ok(())
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         graphics::clear(ctx, [0.2, 0.5, 0.7, 1.0].into());
 
-        let circle = graphics::Mesh::new_circle(ctx,
-        graphics::DrawMode::fill(), nalgebra::Point2::new(0.0, 0.0), 100.0, 2.0, graphics::WHITE)?;
-        graphics::draw(ctx, &circle, (nalgebra::Point2::new(self.pos_x, self.pos_y),))?;
+        let circle = graphics::Mesh::new_circle(
+            ctx,
+            graphics::DrawMode::fill(),
+            Point2::new(0.0, 0.0),
+            10.0,
+            2.0,
+            graphics::WHITE,
+        )?;
+        graphics::draw(ctx, &circle, (self.ball.pos,))?;
+
+        let rect = graphics::Mesh::new_rectangle(
+            ctx,
+            graphics::DrawMode::fill(),
+            graphics::Rect::new(-5.0, -50.0, 10.0, 100.0),
+            graphics::WHITE,
+        )?;
+        graphics::draw(ctx, &rect, (self.paddles[0].pos,))?;
+        graphics::draw(ctx, &rect, (self.paddles[1].pos,))?;
         graphics::present(ctx)?;
 
         Ok(())
