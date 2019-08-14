@@ -1,3 +1,4 @@
+use ggez::conf::{WindowMode, WindowSetup};
 use ggez::event::{self, EventHandler, KeyCode};
 use ggez::graphics;
 use ggez::input::keyboard;
@@ -160,7 +161,13 @@ impl EventHandler for MainState {
 }
 
 fn main() -> GameResult {
-    let cb = ggez::ContextBuilder::new("simple_pong", "shessel");
+    let cb = ggez::ContextBuilder::new("simple_pong", "shessel")
+        .window_setup(WindowSetup::default().title("Pong"))
+        .window_mode(
+            WindowMode::default()
+                .dimensions(800.0, 600.0)
+                .resizable(false),
+        );
     let (ctx, event_loop) = &mut cb.build()?;
     let state = &mut MainState::new()?;
     event::run(ctx, event_loop, state)
