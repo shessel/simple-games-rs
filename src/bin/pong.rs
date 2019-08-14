@@ -78,15 +78,23 @@ impl EventHandler for MainState {
             }
         } else {
             if keyboard::is_key_pressed(ctx, KeyCode::Up) {
-                for paddle in self.paddles.iter_mut() {
-                    paddle.pos.y -= 4.0;
-                    paddle.pos.y = paddle.pos.y.max(60.0);
-                }
+                self.paddles[Player::Right as usize].pos.y -= 4.0;
+                self.paddles[Player::Right as usize].pos.y =
+                    self.paddles[Player::Right as usize].pos.y.max(60.0);
             } else if keyboard::is_key_pressed(ctx, KeyCode::Down) {
-                for paddle in self.paddles.iter_mut() {
-                    paddle.pos.y += 4.0;
-                    paddle.pos.y = paddle.pos.y.min(540.0);
-                }
+                self.paddles[Player::Right as usize].pos.y += 4.0;
+                self.paddles[Player::Right as usize].pos.y =
+                    self.paddles[Player::Right as usize].pos.y.min(540.0);
+            }
+
+            if keyboard::is_key_pressed(ctx, KeyCode::W) {
+                self.paddles[Player::Left as usize].pos.y -= 4.0;
+                self.paddles[Player::Left as usize].pos.y =
+                    self.paddles[Player::Left as usize].pos.y.max(60.0);
+            } else if keyboard::is_key_pressed(ctx, KeyCode::S) {
+                self.paddles[Player::Left as usize].pos.y += 4.0;
+                self.paddles[Player::Left as usize].pos.y =
+                    self.paddles[Player::Left as usize].pos.y.min(540.0);
             }
 
             if let Phase::Serve(player) = &self.phase {
@@ -96,7 +104,7 @@ impl EventHandler for MainState {
                 }
             } else {
                 if self.ball.vel.x > 0.0 {
-                    if (self.ball.pos.x - self.paddles[Player::Right as usize].pos.x).abs() < 5.0
+                    if self.paddles[Player::Right as usize].pos.x - self.ball.pos.x < 10.0
                         && (self.ball.pos.y - self.paddles[Player::Right as usize].pos.y).abs()
                             < 55.0
                     {
@@ -104,12 +112,12 @@ impl EventHandler for MainState {
                     } else if self.ball.pos.x > self.paddles[Player::Right as usize].pos.x + 10.0 {
                         self.ball.vel.x *= -1.0;
                         self.ball.pos = self.paddles[Player::Right as usize].pos;
-                        self.ball.pos.x -= 10.0;
+                        self.ball.pos.x -= 15.0;
                         self.score[Player::Left as usize] += 1;
                         self.phase = Phase::Serve(Player::Right);
                     }
                 } else {
-                    if (self.ball.pos.x - self.paddles[Player::Left as usize].pos.x).abs() < 5.0
+                    if self.ball.pos.x - self.paddles[Player::Left as usize].pos.x < 10.0
                         && (self.ball.pos.y - self.paddles[Player::Left as usize].pos.y).abs()
                             < 55.0
                     {
@@ -117,7 +125,7 @@ impl EventHandler for MainState {
                     } else if self.ball.pos.x < self.paddles[Player::Left as usize].pos.x - 10.0 {
                         self.ball.vel.x *= -1.0;
                         self.ball.pos = self.paddles[Player::Left as usize].pos;
-                        self.ball.pos.x += 10.0;
+                        self.ball.pos.x += 15.0;
                         self.score[Player::Right as usize] += 1;
                         self.phase = Phase::Serve(Player::Left);
                     }
