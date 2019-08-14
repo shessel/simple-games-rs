@@ -1,6 +1,8 @@
+use std::f32;
+
 use ggez::conf::{WindowMode, WindowSetup};
 use ggez::event::{self, EventHandler, KeyCode};
-use ggez::graphics;
+use ggez::graphics::{self, Align, DrawMode, Font, Mesh, Rect, Scale, Text};
 use ggez::input::keyboard;
 use ggez::nalgebra::{Point2, Vector2};
 use ggez::{Context, GameResult};
@@ -99,13 +101,12 @@ impl EventHandler for MainState {
                             < 55.0
                     {
                         self.ball.vel.x *= -1.0;
-                    } else if self.ball.pos.x > self.paddles[Player::Right as usize].pos.x + 5.0 {
+                    } else if self.ball.pos.x > self.paddles[Player::Right as usize].pos.x + 10.0 {
                         self.ball.vel.x *= -1.0;
                         self.ball.pos = self.paddles[Player::Right as usize].pos;
                         self.ball.pos.x -= 10.0;
                         self.score[Player::Left as usize] += 1;
                         self.phase = Phase::Serve(Player::Right);
-                        println!("Score: {:?}", self.score);
                     }
                 } else {
                     if (self.ball.pos.x - self.paddles[Player::Left as usize].pos.x).abs() < 5.0
@@ -113,21 +114,23 @@ impl EventHandler for MainState {
                             < 55.0
                     {
                         self.ball.vel.x *= -1.0;
-                    } else if self.ball.pos.x < self.paddles[Player::Left as usize].pos.x - 5.0 {
+                    } else if self.ball.pos.x < self.paddles[Player::Left as usize].pos.x - 10.0 {
                         self.ball.vel.x *= -1.0;
                         self.ball.pos = self.paddles[Player::Left as usize].pos;
                         self.ball.pos.x += 10.0;
                         self.score[Player::Right as usize] += 1;
                         self.phase = Phase::Serve(Player::Left);
-                        println!("Score: {:?}", self.score);
                     }
                 }
-                if self.ball.pos.y < 0.0 && self.ball.vel.y < 0.0
-                    || self.ball.pos.y > 600.0 && self.ball.vel.y > 0.0
+                if self.ball.pos.y < 5.0 && self.ball.vel.y < 0.0
+                    || self.ball.pos.y > 595.0 && self.ball.vel.y > 0.0
                 {
                     self.ball.vel.y *= -1.0;
                 }
-                self.ball.pos += self.ball.vel;
+
+                if self.phase == Phase::Playing {
+                    self.ball.pos += self.ball.vel;
+                }
             }
         }
         Ok(())
@@ -136,9 +139,9 @@ impl EventHandler for MainState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         graphics::clear(ctx, [0.2, 0.5, 0.7, 1.0].into());
 
-        let circle = graphics::Mesh::new_circle(
+        let circle = Mesh::new_circle(
             ctx,
-            graphics::DrawMode::fill(),
+            DrawMode::fill(),
             Point2::new(0.0, 0.0),
             10.0,
             2.0,
@@ -146,14 +149,25 @@ impl EventHandler for MainState {
         )?;
         graphics::draw(ctx, &circle, (self.ball.pos,))?;
 
-        let rect = graphics::Mesh::new_rectangle(
+        let rect = Mesh::new_rectangle(
             ctx,
-            graphics::DrawMode::fill(),
-            graphics::Rect::new(-5.0, -50.0, 10.0, 100.0),
+            DrawMode::fill(),
+            Rect::new(-5.0, -50.0, 10.0, 100.0),
             graphics::WHITE,
         )?;
         graphics::draw(ctx, &rect, (self.paddles[0].pos,))?;
         graphics::draw(ctx, &rect, (self.paddles[1].pos,))?;
+
+        let mut score_text = Text::new(format!(
+            "{} : {}",
+            self.score[Player::Left as usize],
+            self.score[Player::Right as usize]
+        ));
+        score_text.set_font(Font::default(), Scale::uniform(25.0));
+        score_text.set_bounds(Point2::new(800.0, 100.0), Align::Center);
+
+        graphics::draw(ctx, &score_text, (Point2::new(0.0, 0.0), graphics::WHITE))?;
+
         graphics::present(ctx)?;
 
         Ok(())
